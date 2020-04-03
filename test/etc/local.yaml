@@ -1,0 +1,14 @@
+runMode: debug
+server:
+    port: 8091
+    readTimeout: 60
+    writeTimeout: 60
+database:
+    type: mysql
+    user: root
+    password: 123456
+    host: 127.0.0.1
+    dbName: ylxs
+log:
+    path: runtime/log
+    prefix: log_

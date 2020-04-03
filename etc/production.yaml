@@ -1,0 +1,13 @@
+runMode: debug
+server:
+    port: 8088
+    readTimeout: 10
+    writeTimeout: 10
+database:
+    user: root
+    password: 123456
+    host: 127.0.0.1
+    dbName: task
+log:
+    path: runtime/log
+    prefix: log_
