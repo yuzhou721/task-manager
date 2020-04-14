@@ -12,3 +12,9 @@ database:
 log:
     path: runtime/log
     prefix: log_
+yzj:
+    appID: 500000044
+    secret: HKJWb2k5c88aqjjbOCdB
+    eID: 17802920
+    yzjServer: https://yunzhi.cyats.com
+
