@@ -9,13 +9,14 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"task/app/models"
 	"task/conf"
 	"task/routers"
 	"time"
 )
 
 func main() {
-	s := flag.Bool("start", true, "start server")
+	s := flag.Bool("start", false, "start server")
 	i := flag.Bool("init", false, "Init Table")
 	_ = flag.String("env", "local", "env")
 	flag.Parse()
@@ -69,5 +70,5 @@ func start() {
 }
 
 func initTable() {
-
+	models.InitTable()
 }
