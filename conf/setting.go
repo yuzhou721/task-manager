@@ -34,6 +34,14 @@ type Setting struct {
 	Database Database `yaml:"database"`
 	Server   Server   `yaml:"server"`
 	Log      Log      `yaml:"log"`
+	Yzj      Yzj      `yaml:"yzj"`
+}
+
+type Yzj struct {
+	AppID     string `yaml:"appID"`
+	Secret    string `yaml:"secret"`
+	EID       string `yaml:"eID"`
+	YZJServer string `yaml:"yzjServer"`
 }
 
 //Config 全局配置文件

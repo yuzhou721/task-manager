@@ -40,10 +40,12 @@ func init() {
 
 //InitTable 初始化table
 func InitTable() {
+	log.Println("start init table")
 	if db == nil {
 		log.Fatal("mysql connect error")
 	}
 	createTable(&Task{})
+	log.Println("init Table complate")
 }
 
 func createTable(i ...interface{}) {

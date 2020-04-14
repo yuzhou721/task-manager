@@ -25,11 +25,18 @@ func InitRouter() *gin.Engine {
 
 	{
 		//任务相关接口
+		apiv1.POST("/tasks/list", v1.SaveTasks)
 		apiv1.POST("/tasks", v1.SaveTask)
+		apiv1.POST("/tasks/master", v1.SaveTaskMasterAndSlave)
 		apiv1.DELETE("/tasks/:id", v1.DelTask)
-		apiv1.PUT("/tasks", v1.UpdateTask)
-		apiv1.GET("/tasks", v1.GetTask)
-		apiv1.GET("/tasks/list", v1.GetTasks)
+		apiv1.PUT("/tasks/:id", v1.UpdateTask)
+		apiv1.GET("/tasks", v1.GetTasks)
+		apiv1.GET("/tasks/:id", v1.GetTask)
+		apiv1.GET("/count/tasks/:id", v1.CountTask)
+
+		//云之家接口
+		apiv1.GET("/person/:id", v1.GetPerson)
+		apiv1.GET("/org/:id", v1.GetOrg)
 	}
 
 	return r

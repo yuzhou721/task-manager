@@ -9,13 +9,21 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//Response 返回值统一封装
+type Response struct {
+	Msg     string      `json:"msg"`
+	Data    interface{} `json:"data"`
+	Success bool        `json:"success"`
+}
+
 //SaveTask 保存任务
 func SaveTask(c *gin.Context) {
 	var t models.Task
 	err := c.BindJSON(&t)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "error ",
+		c.JSON(http.StatusBadRequest, &Response{
+			Msg:     err.Error(),
+			Success: false,
 		})
 	}
 	c.Status(http.StatusCreated)
@@ -56,6 +64,7 @@ func UpdateTask(c *gin.Context) {
 //GetTasks 获取task分页数据
 func GetTasks(c *gin.Context) {
 	var t models.Task
+	var ri = 0
 	role := c.Query("role")
 	ri, err := strconv.Atoi(role)
 	if err != nil {
@@ -63,24 +72,22 @@ func GetTasks(c *gin.Context) {
 			"msg": err.Error(),
 		})
 	}
+	openID := c.Query("openId")
+	orgID := c.Query("orgId")
 	search := c.Query("search")
 	page, pageSize, err := utils.GetPage(c)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": err.Error(),
 		})
+		return
 	}
-	err = c.BindJSON(&t)
+	ts, count, err := t.FindList(ri, openID, orgID, search, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": err.Error(),
 		})
-	}
-	ts, count, err := t.FindList(ri, search, page, pageSize)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": err.Error(),
-		})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -93,7 +100,17 @@ func GetTasks(c *gin.Context) {
 func GetTask(c *gin.Context) {
 	var t models.Task
 	id := c.Param("id")
-	t.FindByID(id)
+	err := t.FindByID(id)
+	if err != nil {
+		c.JSON(http.StatusOK, &Response{
+			Success: false,
+			Msg:     err.Error(),
+		})
+	}
+	c.JSON(http.StatusOK, &Response{
+		Data:    t,
+		Success: true,
+	})
 }
 
 //SaveTasks 保存任务列表
@@ -105,5 +122,49 @@ func SaveTasks(c *gin.Context) {
 			"msg": err.Error(),
 		})
 	}
-	(&models.Task{}).SaveList(&tasks)
+	(&models.Task{}).SaveOrUpdateList(&tasks)
+}
+
+//SaveTaskMasterAndSlave 创建页面保存主从表
+func SaveTaskMasterAndSlave(c *gin.Context) {
+	var tasks []models.Task
+	err := c.BindJSON(&tasks)
+	if err != nil {
+		c.JSON(http.StatusBadRequest,
+			&Response{
+				Msg:     err.Error(),
+				Success: false,
+			})
+		return
+	}
+	//如果值录入了主任务 就只保存一条
+	if len(tasks) == 1 {
+		tasks[0].Save()
+	} else {
+		//如果录入子任务 就按照主从保存
+		(&models.Task{}).SaveMasterAndSlave(tasks)
+	}
+	c.Status(http.StatusCreated)
+}
+
+//CountTask 根据id查询任务数量
+func CountTask(c *gin.Context) {
+	var t models.Task
+	id := c.Param("id")
+	total, complete, u, err := t.CountTaskByParentID(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, &Response{
+			Msg: err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, &Response{
+		Success: true,
+		Data: &gin.H{
+			"total":    total,
+			"complete": complete,
+			"undo":     u,
+		},
+	})
+
 }
