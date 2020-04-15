@@ -7,18 +7,25 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
 	"task/conf"
+	"task/pkg/utils"
 	"time"
 )
 
 type Yzj struct {
-	token  string
-	AppID  string
-	Secret string
-	Scope  string
+	token        string
+	refreshToken string
+	expireIn     int
+	AppID        string
+	Secret       string
+	Scope        string
+	EID          string
+	PubID        string
+	PubSecret    string
 }
 
 const (
@@ -81,6 +88,11 @@ type yzjResponse struct {
 	Error     string `json:"error"`
 	ErrorCode int    `json:"errorCode"`
 	Success   bool   `json:"success"`
+}
+
+type pubResponse struct {
+	PubID       string `json:"pubId"`
+	SourceMsgID string `json:"sourceMsgId"`
 }
 
 type getPersonResponse struct {
@@ -220,11 +232,211 @@ func (y *Yzj) GetOrg(orgID string) (*Org, error) {
 	return &org, nil
 }
 
-//SendTodo 发送待办
-func (y *Yzj) SendTodo() (err error) {
+type todoRequest struct {
+	URL       string      `json:"url"`       //	是 	点击待办跳转的URL
+	SourceID  string      `json:"sourceId"`  //	是 	生成的待办所关联的第三方服务业务记录的ID，待办的批次号，对应待办处理中的sourceitemid
+	Content   string      `json:"content"`   //	否 	待办内容
+	Title     string      `json:"title"`     //	是 	来自字段的内容显示
+	Itemtitle string      `json:"itemtitle"` //	否 	待办项标题内容显示,选填，如不填，则默认为title值
+	HeadImg   string      `json:"headImg"`   //	是 	待办在客户端显示的图URL
+	AppID     string      `json:"appId"`     //	是 	生成的待办所关联的第三方服务类型ID,appId和sourceId组合在一起标识云之家唯一的一条待办
+	SenderID  string      `json:"senderId"`  //	否 	待办的发送人的openId
+	Params    []todoParam `json:"params"`
+}
+
+type todoParam struct {
+	OpenID string     `json:"openId"` //	是 	待办接受人ID，可填多人
+	Status todoStatus `json:"status"`
+}
+
+type todoStatus struct {
+	DO   int `json:"DO"`   //	否 	目标处理状态，0表示未办，1表示已办，默认为0
+	READ int `json:"READ"` //	否 	目标读状态，0表示未读，1表示已读，默认为0
+}
+
+type todoResponse struct {
+	Success   string      `json:"success"`
+	ErrorCode int         `json:"errorCode"`
+	Error     string      `json:"error"`
+	Data      interface{} `json:"data"`
+}
+
+//GenerateTODO 发送待办
+func (y *Yzj) GenerateTODO(sourceID, openID, title, content, itemTitle, URL, headImgURL string) (err error) {
 	err = y.getToken()
 	if err != nil {
 		return
 	}
+
+	status := todoStatus{0, 0}
+	p := todoParam{openID, status}
+
+	request := &todoRequest{
+		URL:       URL,
+		SourceID:  sourceID,
+		Content:   content,
+		Title:     title,
+		Itemtitle: itemTitle,
+		HeadImg:   headImgURL,
+		AppID:     y.AppID,
+		Params:    []todoParam{p},
+	}
+	j, err := json.Marshal(request)
+	if err != nil {
+		log.Printf("error :%v", err)
+	}
+	u := fmt.Sprintf("%v/gateway/newtodo/open/generatetodo.json?accessToken=%v", conf.Config.Yzj.YZJServer, y.token)
+	client := &http.Client{}
+	response, err := client.Post(u, "application/json", bytes.NewBuffer(j))
+	if err != nil {
+		return err
+	}
+
+	var res todoResponse
+	err = marshal(response, &res)
+	if err != nil {
+		return
+	}
+	if res.Success == "false" {
+		return errors.New(res.Error)
+	}
+	return
+}
+
+type oprateTodoRequest struct {
+	Sourcetype   string     `json:"sourcetype"`   //	是 	应用ID，即appId
+	Sourceitemid string     `json:"sourceitemid"` //	是 	即发送待办的sourceId,生成的待办所关联的第三方服务业务记录的ID，是待办的批次号
+	Openids      []string   `json:"openids"`      // 	否 	可填多人，不填则更改sourceitemid下所有人员的待办状态
+	ActionType   actionType `json:"actiontype"`
+}
+
+type actionType struct {
+	Deal   int `json:"deal"`   //	否 	目标处理状态，0表示未办，1表示已办，默认为0
+	Read   int `json:"read"`   //	否 	目标读状态，0表示未读，1表示已读，默认为0
+	Delete int `json:"delete"` //	否 	目标删除状态，0表示未删除，1表示已删除
+}
+
+//OprateTodo 修改TODO状态
+func (y *Yzj) OprateTodo(sourceID string, openIDs []string, deal int, read, delete int) (err error) {
+	err = y.getToken()
+	if err != nil {
+		return
+	}
+	at := actionType{deal, read, delete}
+	request := &oprateTodoRequest{
+		Sourceitemid: sourceID,
+		Sourcetype:   y.AppID,
+		Openids:      openIDs,
+		ActionType:   at,
+	}
+	j, err := json.Marshal(request)
+	if err != nil {
+		log.Printf("error :%v", err)
+	}
+	url := fmt.Sprintf("%v/gateway/newtodo/open/action.json?accessToken=%v", conf.Config.Yzj.YZJServer, y.token)
+	client := &http.Client{}
+	response, err := client.Post(url, "application/json", bytes.NewBuffer(j))
+	if err != nil {
+		return
+	}
+	var res todoResponse
+	err = marshal(response, &res)
+	if err != nil {
+		return
+	}
+	if res.Success == "false" {
+		return errors.New(res.Error)
+	}
+	return
+}
+
+func marshal(res *http.Response, responseData interface{}) (err error) {
+	body, _ := ioutil.ReadAll(res.Body)
+	log.Printf("body = %v", string(body))
+	if res.StatusCode != 200 {
+		return errors.New(string(body))
+	}
+	err = json.Unmarshal(body, &responseData)
+	if err != nil {
+		return
+	}
+	return
+}
+
+type pubRequest struct {
+	From from `json:"from"` //"from":"发送方信息，格式为JSON对象",
+	To   []to `json:"to"`   //"to":"接收方信息，格式为包含一至多个接收方信息JSON对象的JSON数组",
+	Type int  `json:"type"` //"type":"消息类型，格式为整型",(取值 2：单文本,5：文本链接,6：图文链接)
+	Msg  msg  `json:"msg"`  //"msg":"发布到讯通的消息内容，格式为JSON对象"
+}
+
+type from struct {
+	No       string `json:"no"`       //"no":"发送方企业的企业注册号(eid)，格式为字符串",
+	Pub      string `json:"pub"`      //"pub":"发送使用的公共号ID，格式为字符串",
+	Time     string `json:"time"`     //"time":"发送时间，为'currentTimeMillis()以毫秒为单位的当前时间'的字符串或数字",
+	Nonce    int    `json:"nonce"`    //"nonce":"随机数，格式为字符串或数字",
+	PubToken string `json:"pubtoken"` //"pubtoken":"公共号加密串，格式为字符串。"
+}
+
+type to struct {
+	No   string   `json:"no"`   //"no":"接收方企业的企业注册号(eID)，格式为字符串",
+	User []string `json:"user"` //"user":"接收方的用户ID，格式为包含OPENID的JSON数组"
+}
+
+type msg struct {
+	Text  string `json:"text"`  //	"text":"文本消息内容，String",
+	URL   string `json:"url"`   //	"url":"文本链接地址，格式为经过URLENCODE编码的字符串",
+	APPID string `json:"appid"` //	"appid": "如果打开的链接是轻应用,必须传入轻应用号讯通才能传入参数ticket,参考<轻应用框架>开发",
+	Todo  int    `json:"todo"`  //	"todo":"int，必填,暂时只能为0，表示推送原公共号消息",
+}
+
+//GenerateNotify 构建通知
+func (y *Yzj) GenerateNotify(text, url string, openIDs []string) (err error) {
+	msg := msg{
+		URL:   url,
+		Text:  text,
+		APPID: conf.Config.Yzj.AppID,
+		Todo:  0,
+	}
+	t := fmt.Sprintf("%v", time.Now().UnixNano()/1e6)
+	eid := y.EID
+	pubID := y.PubID
+	pubSecret := y.PubSecret
+	nonce := rand.Int()
+
+	pubToken := utils.Sha([]string{eid, pubID, pubSecret, strconv.Itoa(nonce), t})
+	f := from{
+		No:       eid,
+		Pub:      pubID,
+		Time:     t,
+		Nonce:    nonce,
+		PubToken: pubToken,
+	}
+
+	to1 := to{
+		No:   eid,
+		User: openIDs,
+	}
+
+	request := &pubRequest{
+		From: f,
+		To:   []to{to1},
+		Type: 5,
+		Msg:  msg,
+	}
+
+	j, err := json.Marshal(request)
+	if err != nil {
+		log.Printf("error :%v", err)
+	}
+
+	u := fmt.Sprintf("%v/pubacc/pubsend", conf.Config.Yzj.YZJServer)
+	client := &http.Client{}
+	response, err := client.Post(u, "application/json", bytes.NewBuffer(j))
+	if err != nil {
+		return
+	}
+	var res pubResponse
+	marshal(response, res)
 	return
 }

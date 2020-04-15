@@ -42,6 +42,8 @@ type Yzj struct {
 	Secret    string `yaml:"secret"`
 	EID       string `yaml:"eID"`
 	YZJServer string `yaml:"yzjServer"`
+	PubID     string `yaml:"pubID"`
+	PubSecret string `yaml:"pubSecret"`
 }
 
 //Config 全局配置文件
