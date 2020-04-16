@@ -20,18 +20,18 @@ import (
 // 	}
 // }
 
-// func TestUpdate(t *testing.T) {
-// 	task := &models.Task{
-// 		Assigner: "test",
-// 	}
-// 	task2, err := task.FindOne()
-// 	if err != nil {
-// 		t.Error("query fail")
-// 	}
-// 	task2.Assigner = "test2"
-// 	task2.Update()
+func TestUpdate(t *testing.T) {
 
-// }
+	task := new(models.Task)
+	task.ID = 9
+	task2, err := task.FindOne()
+	if err != nil {
+		t.Error("query fail")
+	}
+	task2.Status = models.TaskStatusDone
+	task2.Update()
+
+}
 
 // func TestDelete(t *testing.T) {
 // 	task := &models.Task{

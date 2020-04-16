@@ -103,16 +103,28 @@ func (t *Task) FindByID(id string) (err error) {
 
 func (t *Task) findChildren() (err error) {
 	var children []*Task
-	if err = db.Model(t).Where("parent_id = ?", t.ID).Find(&children).Error; err != nil && err != gorm.ErrRecordNotFound {
+	if err = db.Model(t).Where("parent_id = ?", t.ID).Find(&children).Error; err != nil {
 		return err
 	}
 	t.Children = children
 	return nil
 }
 
+func (t *Task) findParent(tx *gorm.DB) (parent *Task, err error) {
+	parent = &Task{}
+	if t.ParentID == nil {
+		return
+	}
+	if err = db.Model(t).Where(*t.ParentID).First(parent).Error; err != nil {
+		return
+	}
+	return
+}
+
 //FindOne 根据条件查询数据
 func (t *Task) FindOne() (r *Task, err error) {
-	if err = db.Where(t).First(&r).Error; err != nil && err != gorm.ErrRecordNotFound {
+	r = &Task{}
+	if err = db.Where(&t).First(r).Error; err != nil && err != gorm.ErrRecordNotFound {
 		return
 	}
 	return
@@ -122,6 +134,67 @@ func (t *Task) FindOne() (r *Task, err error) {
 func (t *Task) Update() (err error) {
 	if err = db.Model(t).Update(t).Error; err != nil && err != gorm.ErrRecordNotFound {
 		return
+	}
+	return
+}
+
+//AfterUpdate 钩子函数 用于更新数据状态以后 更新父类状态
+func (t *Task) AfterUpdate(tx *gorm.DB) (err error) {
+	if t.Status == TaskStatusDone {
+		if err = t.updateParentDone(tx); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (t *Task) updateParentDone(tx *gorm.DB) (err error) {
+	if t.ParentID == nil {
+		return
+	}
+	// 查询父任务
+	var pt Task
+	if t.ParentID == nil {
+		return
+	}
+	if err = tx.Model(t).Where(*t.ParentID).First(&pt).Error; err != nil {
+		return
+	}
+	// 如果没有父任务 跳出
+	if err != nil && err == gorm.ErrRecordNotFound {
+		return nil
+	}
+	// 未知错误 跳出
+	if err != nil {
+		return
+	}
+	if pt.Status == TaskStatusDone {
+		return
+	}
+
+	// 查询子任务 因为在同一个事务，所以可以脏读取
+	var children []*Task
+	if err = tx.Model(t).Where("parent_id = ?", pt.ID).Find(&children).Error; err != nil && err != gorm.ErrRecordNotFound {
+		return
+	}
+
+	// 如果子任务查询出来完成任务数量等于子任务数量 说明全部任务已完成 修改父任态
+	cl := len(children)
+	if cl == 0 {
+		return
+	}
+	var ci = 0
+	for _, v := range children {
+		if v.Status == TaskStatusDone {
+			ci++
+		}
+	}
+
+	if cl == ci {
+		pt.Status = TaskStatusDone
+		if err = tx.Model(t).Update(&pt).Error; err != nil && err != gorm.ErrRecordNotFound {
+			return
+		}
 	}
 	return
 }
