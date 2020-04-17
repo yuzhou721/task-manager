@@ -262,14 +262,17 @@ type todoResponse struct {
 }
 
 //GenerateTODO 发送待办
-func (y *Yzj) GenerateTODO(sourceID, openID, title, content, itemTitle, URL, headImgURL string) (err error) {
+func (y *Yzj) GenerateTODO(sourceID string, openIDs []string, title, content, itemTitle, URL, headImgURL string) (err error) {
 	err = y.getToken()
 	if err != nil {
 		return
 	}
-
+	params := make([]todoParam, len(openIDs))
 	status := todoStatus{0, 0}
-	p := todoParam{openID, status}
+	for _, v := range openIDs {
+		p := todoParam{v, status}
+		params = append(params, p)
+	}
 
 	request := &todoRequest{
 		URL:       URL,
@@ -279,7 +282,7 @@ func (y *Yzj) GenerateTODO(sourceID, openID, title, content, itemTitle, URL, hea
 		Itemtitle: itemTitle,
 		HeadImg:   headImgURL,
 		AppID:     y.AppID,
-		Params:    []todoParam{p},
+		Params:    params,
 	}
 	j, err := json.Marshal(request)
 	if err != nil {

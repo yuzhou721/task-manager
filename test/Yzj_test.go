@@ -50,7 +50,7 @@ func TestSendTodo(t *testing.T) {
 		Secret: conf.Config.Yzj.Secret,
 		Scope:  yzj.YzjScopeApp,
 	}
-	err := y.GenerateTODO("2555", "5de5fd59d08e886badfeb8d8", "测试title", "测试content", "测试itemTitle", "http://www.baidu.com", "http://yunzhi.cyats.com/docrest/file/downloadfile/5dfb1ae34f1c47119704b1f7")
+	err := y.GenerateTODO("2555", []string{"5de5fd59d08e886badfeb8d8"}, "测试title", "测试content", "测试itemTitle", "http://www.baidu.com", "http://yunzhi.cyats.com/docrest/file/downloadfile/5dfb1ae34f1c47119704b1f7")
 	if err != nil {
 		t.Errorf("err send Todo:%v", err.Error())
 	}

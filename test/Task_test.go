@@ -63,10 +63,18 @@ func TestGetTask(t *testing.T) {
 }
 
 func TestGetTasks(t *testing.T) {
-	tasks, count, err := (&models.Task{}).FindList(2, "5df05b6bd08e4390b7f7306f", "273413ce-1a56-11ea-9751-0050569293b2", "", 1, 10)
+	tasks, count, err := (&models.Task{}).FindList(2, "5df05b6bd08e4390b7f7306f", "273413ce-1a56-11ea-9751-0050569293b2", "", models.TaskStatusDone, 1, 10)
 	if err != nil {
 		t.Error("error :", err)
 	}
 	t.Logf("task=%v count=%v err=%v", tasks, count, err)
 
+}
+
+func TestGetPercent(t *testing.T) {
+	percent, err := (&models.Task{}).CountTaskPercent("6")
+	if err != nil {
+		t.Errorf("error count percent:%v", err)
+	}
+	t.Logf("percent:%v", percent)
 }

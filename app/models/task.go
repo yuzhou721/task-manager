@@ -1,9 +1,14 @@
 package models
 
 import (
+	"fmt"
+	"log"
+	"strconv"
 	"time"
 
+	"task/conf"
 	"task/pkg/utils"
+	"task/pkg/yzj"
 
 	"github.com/jinzhu/gorm"
 )
@@ -85,6 +90,7 @@ func (t *Task) SaveMasterAndSlave(tasks []Task) (err error) {
 		if err = tx.Create(&v).Error; err != nil {
 			tx.Rollback()
 		}
+		v.sendTodo()
 	}
 	tx.Commit()
 	return err
@@ -110,7 +116,7 @@ func (t *Task) findChildren() (err error) {
 	return nil
 }
 
-func (t *Task) findParent(tx *gorm.DB) (parent *Task, err error) {
+func (t *Task) findParent() (parent *Task, err error) {
 	parent = &Task{}
 	if t.ParentID == nil {
 		return
@@ -134,6 +140,10 @@ func (t *Task) FindOne() (r *Task, err error) {
 func (t *Task) Update() (err error) {
 	if err = db.Model(t).Update(t).Error; err != nil && err != gorm.ErrRecordNotFound {
 		return
+	}
+	if t.Status == TaskStatusDone {
+		//TODO:消除待办
+		t.sendNotify(notifyTypeStatus)
 	}
 	return
 }
@@ -173,18 +183,18 @@ func (t *Task) updateParentDone(tx *gorm.DB) (err error) {
 	}
 
 	// 查询子任务 因为在同一个事务，所以可以脏读取
-	var children []*Task
-	if err = tx.Model(t).Where("parent_id = ?", pt.ID).Find(&children).Error; err != nil && err != gorm.ErrRecordNotFound {
+	var brother []*Task
+	if err = tx.Model(t).Where("parent_id = ?", t.ParentID).Find(&brother).Error; err != nil && err != gorm.ErrRecordNotFound {
 		return
 	}
 
 	// 如果子任务查询出来完成任务数量等于子任务数量 说明全部任务已完成 修改父任态
-	cl := len(children)
+	cl := len(brother)
 	if cl == 0 {
 		return
 	}
 	var ci = 0
-	for _, v := range children {
+	for _, v := range brother {
 		if v.Status == TaskStatusDone {
 			ci++
 		}
@@ -208,10 +218,9 @@ func (t *Task) Delete() (err error) {
 }
 
 //FindList 根据条件以及角色分页查询数据
-func (t *Task) FindList(role int, openID, orgID, search string, page, pageSize int) (tasks []Task, count int, err error) {
+func (t *Task) FindList(role int, openID, orgID, search string, status, page, pageSize int) (tasks []Task, count int, err error) {
 
 	// 查询条件
-	//TODO:根据角色查询
 	searchDb := db.Model(t)
 	if role == RoleAdmin {
 		searchDb = searchDb.Where("parent_id is null")
@@ -221,6 +230,8 @@ func (t *Task) FindList(role int, openID, orgID, search string, page, pageSize i
 	} else {
 		searchDb = searchDb.Where("designated_person_id = ?", openID)
 	}
+	// 状态查询
+	searchDb = searchDb.Where("status = ?", status)
 	// 模糊查询
 	if search != "" {
 		search = "%" + search + "%"
@@ -241,21 +252,142 @@ func (t *Task) FindList(role int, openID, orgID, search string, page, pageSize i
 	return
 }
 
-//CountTaskByParentID 统计任务完成数
-func (t *Task) CountTaskByParentID(pID string) (total, complate, undo int, err error) {
-	var tasks []*Task
-	// 查询总数
-	err = db.Model(&t).Where("parent_id = ?", pID).Find(&tasks).Error
+//CountTaskPercent 统计任务完成数
+func (t *Task) CountTaskPercent(ID string) (percent float32, err error) {
+	var mPercent float32
+	// 查询数据
+	err = t.FindByID(ID)
 	if err != nil && err == gorm.ErrRecordNotFound {
 		return
 	}
-	total = len(tasks)
-	for _, v := range tasks {
-		if v.Status == TaskStatusDone {
-			complate++
-		} else if v.Status == TaskStatusUndo {
-			undo++
+	total := len(t.Children)
+	if total == 0 {
+		if t.Status == TaskStatusDone {
+			mPercent++
 		}
+		return
+	}
+	for _, v := range t.Children {
+		if v.Status == TaskStatusDone {
+			mPercent++
+		} else if v.Status == TaskStatusUndo {
+			cPercent, err := v.CountTaskPercent(strconv.Itoa(int(v.ID)))
+			if err != nil {
+				continue
+			}
+			mPercent += cPercent
+		}
+	}
+
+	percent = mPercent / float32(total)
+	return
+}
+
+//轻应用名称
+const itemTitle = "任务中心"
+
+func (t *Task) sendTodo() (err error) {
+	y := &yzj.Yzj{
+		AppID:  conf.Config.Yzj.AppID,
+		Secret: conf.Config.Yzj.Secret,
+		Scope:  yzj.YzjScopeApp,
+	}
+	var (
+		openIDs []string
+		title   string
+		content string
+		url     string
+		headImg string
+	)
+
+	title = "你有一个新任务，请及时处理！"
+	content = fmt.Sprintf("任务名称：%v", t.Title)
+	url = fmt.Sprintf("%v/view/%v/edit", conf.Config.App.UIURL, t.ID)
+	if t.DesignatedDepartmentID != "" {
+		org, err := y.GetOrg(t.DesignatedDepartmentID)
+		if err != nil {
+			log.Printf("error get org:%v", err.Error())
+		}
+		for _, v := range org.InChargers {
+			openIDs = append(openIDs, v.OpenID)
+		}
+	} else {
+		openIDs = append(openIDs, t.DesignatedPersonID)
+	}
+	err = y.GenerateTODO(strconv.Itoa(int(t.ID)), openIDs, title, content, itemTitle, url, headImg)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (t *Task) clearTodo() (err error) {
+	y := &yzj.Yzj{
+		AppID:  conf.Config.Yzj.AppID,
+		Secret: conf.Config.Yzj.Secret,
+		Scope:  yzj.YzjScopeApp,
+	}
+	if t.Status != TaskStatusDone {
+		return
+	}
+	if t.ParentID != nil {
+		pt, err := t.findParent()
+		if err != nil {
+			return err
+		}
+		pt.clearTodo()
+	}
+	err = y.OprateTodo(strconv.Itoa(int(t.ID)), []string{strconv.Itoa(int(t.ID))}, 0, 0, 0)
+	if err != nil {
+		return
+	}
+	return
+}
+
+const (
+	notifyTypeStatus = iota
+	notifyTypeTimeout
+)
+
+func (t *Task) sendNotify(Type int) (err error) {
+	y := &yzj.Yzj{
+		EID:       conf.Config.Yzj.EID,
+		PubSecret: conf.Config.Yzj.PubSecret,
+		PubID:     conf.Config.Yzj.PubID,
+	}
+
+	var (
+		url     string
+		openID  string
+		content string
+	)
+
+	if Type == notifyTypeStatus {
+		openID = t.AssignerID
+		if t.ParentID != nil {
+			pt, err := t.findParent()
+			if err != nil {
+				return err
+			}
+			pt.sendNotify(notifyTypeStatus)
+		}
+		if t.Type == TaskTypeNomal {
+			return
+		}
+		percent, err := t.CountTaskPercent(strconv.Itoa(int(t.ID)))
+		if err != nil {
+			return err
+		}
+		percent *= 100
+		content = fmt.Sprintf("任务进度有更新，请知悉！\n任务名称:%v\n任务状态:%.2f%%", t.Title, percent)
+	} else {
+		content = fmt.Sprintf("您有任务即将逾期，请尽快处理！\n任务名称:%v", t.Title)
+	}
+
+	url = fmt.Sprintf("%v/view/%v/view", conf.Config.App.UIURL, t.ID)
+	err = y.GenerateNotify(content, url, []string{openID})
+	if err != nil {
+		return
 	}
 	return
 }

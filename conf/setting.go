@@ -35,6 +35,7 @@ type Setting struct {
 	Server   Server   `yaml:"server"`
 	Log      Log      `yaml:"log"`
 	Yzj      Yzj      `yaml:"yzj"`
+	App      App      `yaml:"app"`
 }
 
 type Yzj struct {
@@ -44,6 +45,10 @@ type Yzj struct {
 	YZJServer string `yaml:"yzjServer"`
 	PubID     string `yaml:"pubID"`
 	PubSecret string `yaml:"pubSecret"`
+}
+
+type App struct {
+	UIURL string `yaml:"UIURL"`
 }
 
 //Config 全局配置文件

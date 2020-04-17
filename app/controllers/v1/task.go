@@ -82,7 +82,17 @@ func GetTasks(c *gin.Context) {
 		})
 		return
 	}
-	ts, count, err := t.FindList(ri, openID, orgID, search, page, pageSize)
+
+	status := c.Query("status")
+	statusI, err := strconv.Atoi(status)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": err.Error(),
+		})
+		return
+	}
+	ts, count, err := t.FindList(ri, openID, orgID, search, statusI, page, pageSize)
+
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": err.Error(),
@@ -151,7 +161,7 @@ func SaveTaskMasterAndSlave(c *gin.Context) {
 func CountTask(c *gin.Context) {
 	var t models.Task
 	id := c.Param("id")
-	total, complete, u, err := t.CountTaskByParentID(id)
+	percent, err := t.CountTaskPercent(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, &Response{
 			Msg: err.Error(),
@@ -161,9 +171,7 @@ func CountTask(c *gin.Context) {
 	c.JSON(http.StatusOK, &Response{
 		Success: true,
 		Data: &gin.H{
-			"total":    total,
-			"complete": complete,
-			"undo":     u,
+			"percent": percent,
 		},
 	})
 
