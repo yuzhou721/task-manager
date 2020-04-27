@@ -133,6 +133,7 @@ func SaveTasks(c *gin.Context) {
 		})
 	}
 	(&models.Task{}).SaveOrUpdateList(&tasks)
+	c.Status(http.StatusCreated)
 }
 
 //SaveTaskMasterAndSlave 创建页面保存主从表
