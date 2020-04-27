@@ -72,6 +72,7 @@ func (t *Task) SaveOrUpdateList(tasks *[]Task) (err error) {
 				tx.Rollback()
 			}
 		}
+		v.sendTodo()
 	}
 	tx.Commit()
 	return err
@@ -142,7 +143,7 @@ func (t *Task) Update() (err error) {
 		return
 	}
 	if t.Status == TaskStatusDone {
-		//TODO:消除待办
+		t.clearTodo()
 		t.sendNotify(notifyTypeStatus)
 	}
 	return
@@ -235,7 +236,7 @@ func (t *Task) FindList(role int, openID, orgID, search string, status, page, pa
 	// 模糊查询
 	if search != "" {
 		search = "%" + search + "%"
-		searchDb.Where("title like ?", search)
+		searchDb = searchDb.Where("title like ? or content = ?", search, search)
 	}
 
 	// 统计总数
@@ -302,7 +303,7 @@ func (t *Task) sendTodo() (err error) {
 
 	title = "你有一个新任务，请及时处理！"
 	content = fmt.Sprintf("任务名称：%v", t.Title)
-	url = fmt.Sprintf("%v/view/%v/edit", conf.Config.App.UIURL, t.ID)
+	url = fmt.Sprintf("%v/#/detail/%v/view", conf.Config.App.UIURL, t.ID)
 	if t.DesignatedDepartmentID != "" {
 		org, err := y.GetOrg(t.DesignatedDepartmentID)
 		if err != nil {
@@ -371,12 +372,12 @@ func (t *Task) sendNotify(Type int) (err error) {
 			}
 			pt.sendNotify(notifyTypeStatus)
 		}
-		if t.Type == TaskTypeNomal {
-			return
-		}
 		percent, err := t.CountTaskPercent(strconv.Itoa(int(t.ID)))
 		if err != nil {
 			return err
+		}
+		if t.Type == TaskTypeNomal && t.Status == TaskStatusDone {
+			percent = 1
 		}
 		percent *= 100
 		content = fmt.Sprintf("任务进度有更新，请知悉！\n任务名称:%v\n任务状态:%.2f%%", t.Title, percent)
@@ -384,10 +385,23 @@ func (t *Task) sendNotify(Type int) (err error) {
 		content = fmt.Sprintf("您有任务即将逾期，请尽快处理！\n任务名称:%v", t.Title)
 	}
 
-	url = fmt.Sprintf("%v/view/%v/view", conf.Config.App.UIURL, t.ID)
+	url = fmt.Sprintf("%v/#/detail/%v/view", conf.Config.App.UIURL, t.ID)
 	err = y.GenerateNotify(content, url, []string{openID})
 	if err != nil {
 		return
+	}
+	return
+}
+
+//Rimind 提醒逾期任务
+func Rimind(time time.Time) (err error) {
+	var tasks []*Task
+	if err = db.Model(&Task{}).Where("date(due_date) = date(?)", time.Local()).Find(&tasks).Error; err != nil && err != gorm.ErrRecordNotFound {
+		return
+	}
+
+	for _, v := range tasks {
+		v.sendNotify(notifyTypeTimeout)
 	}
 	return
 }
