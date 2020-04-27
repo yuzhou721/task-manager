@@ -267,7 +267,7 @@ func (y *Yzj) GenerateTODO(sourceID string, openIDs []string, title, content, it
 	if err != nil {
 		return
 	}
-	params := make([]todoParam, len(openIDs))
+	params := []todoParam{}
 	status := todoStatus{0, 0}
 	for _, v := range openIDs {
 		p := todoParam{v, status}
