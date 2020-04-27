@@ -3,6 +3,7 @@ package test
 import (
 	"task/app/models"
 	"testing"
+	"time"
 )
 
 // func TestInitTable(t *testing.T) {
@@ -77,4 +78,11 @@ func TestGetPercent(t *testing.T) {
 		t.Errorf("error count percent:%v", err)
 	}
 	t.Logf("percent:%v", percent)
+}
+
+func TestRemind(t *testing.T) {
+	err := models.Rimind(time.Now())
+	if err != nil {
+		t.Errorf("error remind:%v", err)
+	}
 }
