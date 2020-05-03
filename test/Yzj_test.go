@@ -67,3 +67,42 @@ func TestOperationTodo(t *testing.T) {
 		t.Errorf("err change todo:%v", err.Error())
 	}
 }
+
+func TestGetOrgPersons(t *testing.T) {
+	y := &yzj.Yzj{
+		AppID:  conf.Config.Yzj.AppID,
+		Secret: conf.Config.Yzj.Secret,
+		Scope:  yzj.YzjScopeApp,
+	}
+	a, b, err := y.GetOrgPersons("273413ce-1a56-11ea-9751-0050569293b2")
+	if err != nil {
+		t.Errorf("err getOrgPersons :%v", err)
+	}
+	t.Logf("inChargers:%v , member : %v", a, b)
+}
+
+func TestGetAllOrgs(t *testing.T) {
+	y := &yzj.Yzj{
+		AppID:  conf.Config.Yzj.AppID,
+		Secret: conf.Config.Yzj.Secret,
+		Scope:  yzj.YzjScopeApp,
+	}
+	a, err := y.GetAllOrgs()
+	if err != nil {
+		t.Errorf("err getAllOrgs :%v", err)
+	}
+	t.Logf("allorgs:%v", a)
+}
+
+func TestAcquireContext(t *testing.T) {
+	y := &yzj.Yzj{
+		AppID:  conf.Config.Yzj.AppID,
+		Secret: conf.Config.Yzj.Secret,
+		Scope:  yzj.YzjScopeApp,
+	}
+	c, e := y.AcquireContext("APPURLWITHTICKET6be84cd6011995696306406a4835dcf4")
+	if e != nil {
+		t.Errorf("err AcquireContext:%v", e)
+	}
+	t.Logf("Context:%v", c)
+}

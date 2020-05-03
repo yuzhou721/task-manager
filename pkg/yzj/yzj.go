@@ -355,7 +355,7 @@ func (y *Yzj) OprateTodo(sourceID string, openIDs []string, deal int, read, dele
 
 func marshal(res *http.Response, responseData interface{}) (err error) {
 	body, _ := ioutil.ReadAll(res.Body)
-	log.Printf("body = %v", string(body))
+	// log.Printf("body = %v", string(body))
 	if res.StatusCode != 200 {
 		return errors.New(string(body))
 	}
@@ -440,6 +440,140 @@ func (y *Yzj) GenerateNotify(text, url string, openIDs []string) (err error) {
 		return
 	}
 	var res pubResponse
-	marshal(response, res)
+	err = marshal(response, res)
+	if err != nil {
+		return
+	}
+
 	return
+}
+
+type getOrgPersonsData struct {
+	InChargers []Person `json:"inChargers"`
+	Members    []Person `json:"members"`
+}
+
+type getOrgPersonsResponse struct {
+	yzjResponse
+	Data getOrgPersonsData `json:"data"`
+}
+
+//GetOrgPersons 根据orgID获取部门人员信息
+func (y *Yzj) GetOrgPersons(orgID string) (inChargers, Members []Person, err error) {
+	err = y.getToken()
+	if err != nil {
+		return
+	}
+	formData := make(url.Values)
+	formData.Add("orgId", orgID)
+	formData.Add("eid", conf.Config.Yzj.EID)
+	url := fmt.Sprintf("%v/gateway/opendata-control/data/getorgpersons?accessToken=%v", conf.Config.Yzj.YZJServer, y.token)
+	client := &http.Client{}
+	response, err := client.PostForm(url, formData)
+	var responseData getOrgPersonsResponse
+	err = marshal(response, &responseData)
+	if err != nil {
+		return
+	}
+	if responseData.Success == false {
+		err = errors.New(responseData.Error)
+		return
+	}
+	inChargers = responseData.Data.InChargers
+	Members = responseData.Data.Members
+
+	return
+}
+
+type getAllOrgsResponse struct {
+	yzjResponse
+	Data []Org `json:"data"`
+}
+
+// GetAllOrgs 获取所有部门信息
+func (y *Yzj) GetAllOrgs() (orgs []Org, err error) {
+	err = y.getToken()
+	if err != nil {
+		return
+	}
+	formData := make(url.Values)
+	formData.Add("eid", conf.Config.Yzj.EID)
+	url := fmt.Sprintf("%v/gateway/opendata-control/data/getallorgs?accessToken=%v", conf.Config.Yzj.YZJServer, y.token)
+	client := &http.Client{}
+	response, err := client.PostForm(url, formData)
+	if err != nil {
+		return
+	}
+	var responseData getAllOrgsResponse
+	err = marshal(response, &responseData)
+	if err != nil {
+		return
+	}
+	if responseData.Success == false {
+		err = errors.New(responseData.Error)
+		return
+	}
+	orgs = responseData.Data
+	return
+}
+
+// YzjContext 云之家上下文
+type YzjContext struct {
+	AppID     string `json:"appid"`
+	XTID      string `json:"xtid"`
+	OID       string `json:"oid"`
+	EID       string `json:"eid"`
+	UserName  string `json:"username"`
+	UserID    string `json:"userid"`
+	UID       string `json:"uid"`
+	TID       string `json:"tid"`
+	JobNo     string `json:"jobNo"`
+	NetworkID string `json:"networkid"`
+	DeviceID  string `json:"devceId"`
+	OpenID    string `json:"openid"`
+}
+
+type acquireContextResponse struct {
+	yzjResponse
+	Data YzjContext `json:"data"`
+}
+
+type acquireContextRequest struct {
+	AppID  string `json:"appid"`
+	Ticket string `json:"ticket"`
+}
+
+// AcquireContext 获取用户上下文信息
+func (y *Yzj) AcquireContext(ticket string) (context YzjContext, err error) {
+	err = y.getToken()
+	if err != nil {
+		return
+	}
+	request := &acquireContextRequest{
+		AppID:  conf.Config.Yzj.AppID,
+		Ticket: ticket,
+	}
+	j, err := json.Marshal(request)
+	if err != nil {
+		log.Printf("error :%v", err)
+	}
+
+	u := fmt.Sprintf("%v/gateway/ticket/user/acquirecontext?accessToken=%v", conf.Config.Yzj.YZJServer, y.token)
+	client := &http.Client{}
+	response, err := client.Post(u, "application/json", bytes.NewBuffer(j))
+	if err != nil {
+		return
+	}
+	var responseData acquireContextResponse
+	err = marshal(response, &responseData)
+	if err != nil {
+		return
+	}
+	if responseData.Success == false {
+		err = errors.New(responseData.Error)
+		return
+	}
+	context = responseData.Data
+	return
+
 }

@@ -37,6 +37,9 @@ func InitRouter() *gin.Engine {
 		//云之家接口
 		apiv1.GET("/person/:id", v1.GetPerson)
 		apiv1.GET("/org/:id", v1.GetOrg)
+		apiv1.GET("/persons/orgs/:id", v1.GetOrgPersons)
+		apiv1.GET("/orgs", v1.GetAllOrgs)
+		apiv1.GET("/context", v1.AcquireContext)
 	}
 
 	return r
