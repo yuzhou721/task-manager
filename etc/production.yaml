@@ -1,13 +1,24 @@
 runMode: debug
 server:
-    port: 8088
-    readTimeout: 10
-    writeTimeout: 10
+    port: 8091
+    readTimeout: 60
+    writeTimeout: 60
 database:
+    type: mysql
     user: root
     password: 123456
     host: 127.0.0.1
-    dbName: task
+    dbName: ylxs
 log:
     path: runtime/log
     prefix: log_
+yzj:
+    appID: 500000044
+    secret: HKJWb2k5c88aqjjbOCdB
+    eID: 17802920
+    yzjServer: https://yunzhi.cyats.com
+    pubID: XT-b5cfd793-5829-4bef-acea-475b06a721e1
+    pubSecret: 5b61017b3949d625003b6770c65e979a
+app:
+    UIURL: http://10.132.26.182:3000
+
