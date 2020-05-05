@@ -169,7 +169,7 @@ func (y *Yzj) getToken() error {
 	if err != nil {
 		log.Printf("error :%v", err)
 	}
-	log.Printf("%v", string(j))
+	// log.Printf("%v", string(j))
 	url := fmt.Sprintf("%v/gateway/oauth2/token/getAccessToken", conf.Config.Yzj.YZJServer)
 	res, err := client.Post(url, "application/json", bytes.NewBuffer(j))
 	if err != nil {

@@ -39,7 +39,7 @@ func InitRouter() *gin.Engine {
 		apiv1.GET("/org/:id", v1.GetOrg)
 		apiv1.GET("/persons/orgs/:id", v1.GetOrgPersons)
 		apiv1.GET("/orgs", v1.GetAllOrgs)
-		apiv1.GET("/context", v1.AcquireContext)
+		apiv1.GET("/context/:ticket", v1.AcquireContext)
 	}
 
 	return r

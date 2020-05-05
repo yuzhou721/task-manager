@@ -226,8 +226,7 @@ func (t *Task) FindList(role int, openID, orgID, search string, status, page, pa
 	if role == RoleAdmin {
 		searchDb = searchDb.Where("parent_id is null")
 	} else if role == RoleDept {
-		searchDb = searchDb.Where("assigner_id = ? and type = '2'", openID)
-		searchDb = searchDb.Or("designated_department_id = ? ", orgID)
+		searchDb = searchDb.Where("(assigner_id = ? and type = '2' ) or designated_department_id = ? ", openID, orgID)
 	} else {
 		searchDb = searchDb.Where("designated_person_id = ?", openID)
 	}

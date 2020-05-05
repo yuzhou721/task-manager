@@ -26,6 +26,13 @@ func SaveTask(c *gin.Context) {
 			Success: false,
 		})
 	}
+	err = t.Save()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, &Response{
+			Msg:     err.Error(),
+			Success: false,
+		})
+	}
 	c.Status(http.StatusCreated)
 }
 
