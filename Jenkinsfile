@@ -15,7 +15,8 @@ pipeline {
     stage('构建') {
       steps {
         echo '构建中...'
-        sh 'export GOPROXY=https://goproxy.cn'
+        sh 'export GO111MODULE=on'
+        sh 'export GOPROXY=https://goproxy.io'
         sh 'go build'
         echo '构建完成.'
       }
