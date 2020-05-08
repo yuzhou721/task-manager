@@ -13,12 +13,12 @@ log:
     path: runtime/log
     prefix: log_
 yzj:
-    appID: 500000044
-    secret: HKJWb2k5c88aqjjbOCdB
-    eID: 17802920
-    yzjServer: https://yunzhi.cyats.com
-    pubID: XT-b5cfd793-5829-4bef-acea-475b06a721e1
-    pubSecret: 5b61017b3949d625003b6770c65e979a
+    appID: 500000006
+    secret: sbLfxVQjBJUm0IRJAQTJ
+    eID: 18980581
+    yzjServer: https://oa.smart-yulong.com/
+    pubID: XT-ab62dab1-a6a5-4417-8a00-282fb591a6e3
+    pubSecret: e260778b40a9036f8fb4fecfed8e9134
 app:
     UIURL: http://119.62.184.109:8082/task-mobile/
 
