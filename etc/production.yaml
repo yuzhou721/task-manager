@@ -16,7 +16,7 @@ yzj:
     appID: 500000006
     secret: sbLfxVQjBJUm0IRJAQTJ
     eID: 18980581
-    yzjServer: https://oa.smart-yulong.com/
+    yzjServer: https://oa.smart-yulong.com
     pubID: XT-ab62dab1-a6a5-4417-8a00-282fb591a6e3
     pubSecret: e260778b40a9036f8fb4fecfed8e9134
 app:
