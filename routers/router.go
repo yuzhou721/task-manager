@@ -40,6 +40,10 @@ func InitRouter() *gin.Engine {
 		apiv1.GET("/persons/orgs/:id", v1.GetOrgPersons)
 		apiv1.GET("/orgs", v1.GetAllOrgs)
 		apiv1.GET("/context/:ticket", v1.AcquireContext)
+
+		// 文件上传下载
+		apiv1.POST("/upload", v1.FileUpload)
+		apiv1.GET("/download", v1.FileDown)
 	}
 
 	return r

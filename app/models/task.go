@@ -26,13 +26,30 @@ type Task struct {
 	Title                  string     //标题
 	Content                string     //内容
 	ParentID               *uint      //主任务id
-	Attach                 string     //附件id
+	Attach                 string     //附件
 	Type                   uint       // 任务类型 1.主任务 2.部门任务 3.人员任务
 	DesignatedPerson       string     //指定人
 	DesignatedPersonID     string     //指定人OpenId
 	DesignatedDepartment   string     //指定部门
 	DesignatedDepartmentID string     //指定部门Id
 	Children               []*Task    `gorm:"-"`
+}
+
+//Attach 附件
+type Attach struct {
+	Response FileInfo `json:"response"`
+	URL      string   `json:"url"`
+	Name     string   `json:"name"`
+	Status   string   `json:"status"`
+	UID      string   `json:"uid"`
+}
+
+// FileInfo 上传文件返回值
+type FileInfo struct {
+	ID       string `form:"id" json:"id"`
+	FileName string `form:"fileName" json:"fileName"`
+	Ext      string `form:"ext" json:"ext"`
+	Path     string `form:"path" json:"path"`
 }
 
 const (
@@ -110,7 +127,7 @@ func (t *Task) FindByID(id string) (err error) {
 
 func (t *Task) findChildren() (err error) {
 	var children []*Task
-	if err = db.Model(t).Where("parent_id = ?", t.ID).Find(&children).Error; err != nil {
+	if err = db.Model(t).Where("parent_id = ?", t.ID).Order("created_at DESC").Find(&children).Error; err != nil {
 		return err
 	}
 	t.Children = children
@@ -243,6 +260,7 @@ func (t *Task) FindList(role int, openID, orgID, search string, status, page, pa
 	// 分页获取
 	searchDb = searchDb.Offset(utils.GetPageOffset(page, pageSize)).Limit(pageSize)
 	// TODO: 排序
+	searchDb = searchDb.Order("created_at DESC")
 
 	err = searchDb.Find(&tasks).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
