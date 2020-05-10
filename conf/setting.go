@@ -48,7 +48,9 @@ type Yzj struct {
 }
 
 type App struct {
-	UIURL string `yaml:"UIURL"`
+	UIURL       string `yaml:"UIURL"`
+	SavePath    string `yaml:"SavePath"`
+	RuntimePath string `yaml:"RuntimePath"`
 }
 
 //Config 全局配置文件

@@ -21,4 +21,7 @@ yzj:
     pubSecret: 5b61017b3949d625003b6770c65e979a
 app:
     UIURL: http://10.132.26.182:3000
+    SavePath: upload
+    RuntimePath : ./runtime
+    
 
