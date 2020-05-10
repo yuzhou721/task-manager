@@ -21,4 +21,5 @@ yzj:
     pubSecret: e260778b40a9036f8fb4fecfed8e9134
 app:
     UIURL: http://119.62.184.109:8082/task-mobile/
-
+    SavePath: upload
+    RuntimePath : ./runtime
