@@ -3,6 +3,7 @@ package v1
 import (
 	"net/http"
 	"path/filepath"
+	"task/app/models"
 	"task/pkg/file"
 	"task/pkg/upload"
 	"time"
@@ -10,14 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid"
 )
-
-// FileInfo 上传文件返回值
-type FileInfo struct {
-	ID       string `form:"id" json:"id"`
-	FileName string `form:"fileName" json:"fileName"`
-	Ext      string `form:"ext" json:"ext"`
-	Path     string `form:"path" json:"path"`
-}
 
 //FileUpload 上传文件
 func FileUpload(c *gin.Context) {
@@ -56,7 +49,7 @@ func FileUpload(c *gin.Context) {
 		})
 		return
 	}
-	data := &FileInfo{
+	data := &models.FileInfo{
 		FileName: fileName,
 		ID:       uuidS,
 		Ext:      ext,
@@ -71,7 +64,7 @@ func FileUpload(c *gin.Context) {
 
 // FileDown 下载文件
 func FileDown(c *gin.Context) {
-	var fileI FileInfo
+	var fileI models.FileInfo
 	err := c.BindQuery(&fileI)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, &Response{
