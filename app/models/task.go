@@ -320,7 +320,7 @@ func (t *Task) sendTodo() (err error) {
 
 	title = "你有一个新任务，请及时处理！"
 	content = fmt.Sprintf("任务名称：%v", t.Title)
-	url = fmt.Sprintf("%v/#/detail/%v/view", conf.Config.App.UIURL, t.ID)
+	url = fmt.Sprintf("%v/#/detail/%v/edit", conf.Config.App.UIURL, t.ID)
 	if t.DesignatedDepartmentID != "" {
 		org, err := y.GetOrg(t.DesignatedDepartmentID)
 		if err != nil {
