@@ -184,3 +184,19 @@ func CountTask(c *gin.Context) {
 	})
 
 }
+
+// DeleteAttach 删除附件
+func DeleteAttach(c *gin.Context) {
+	var a models.Attach
+	id := c.Param("id")
+	err := a.Delete(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, &Response{
+			Msg: err.Error(),
+		})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+
+}

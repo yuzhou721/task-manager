@@ -44,7 +44,7 @@ func InitTable() {
 	if db == nil {
 		log.Fatal("mysql connect error")
 	}
-	createTable(&Task{})
+	createTable(&Task{}, &Attach{}, &File{})
 	log.Println("init Table complate")
 }
 
