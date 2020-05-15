@@ -33,6 +33,7 @@ func InitRouter() *gin.Engine {
 		apiv1.GET("/tasks", v1.GetTasks)
 		apiv1.GET("/tasks/:id", v1.GetTask)
 		apiv1.GET("/count/tasks/:id", v1.CountTask)
+		apiv1.DELETE("/attach/:id", v1.DeleteAttach)
 
 		//云之家接口
 		apiv1.GET("/person/:id", v1.GetPerson)
@@ -43,7 +44,8 @@ func InitRouter() *gin.Engine {
 
 		// 文件上传下载
 		apiv1.POST("/upload", v1.FileUpload)
-		apiv1.GET("/download", v1.FileDown)
+		apiv1.GET("/download/:id", v1.FileDown)
+		apiv1.DELETE("/files/:id", v1.FileDelete)
 	}
 
 	return r

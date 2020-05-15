@@ -14,7 +14,7 @@ import (
 
 //FileUpload 上传文件
 func FileUpload(c *gin.Context) {
-	_, header, err := c.Request.FormFile("file")
+	f, header, err := c.Request.FormFile("file")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, &Response{
 			Success: false,
@@ -49,31 +49,54 @@ func FileUpload(c *gin.Context) {
 		})
 		return
 	}
-	data := &models.FileInfo{
-		FileName: fileName,
-		ID:       uuidS,
-		Ext:      ext,
-		Path:     savePath,
+	size, err := file.GetSize(f)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, &Response{
+			Success: false,
+			Msg:     err.Error(),
+		})
+		return
+	}
+	data := &models.File{
+		Name:    fileName,
+		CacheID: uuidS,
+		Ext:     ext,
+		Path:    savePath,
+		Size:    size,
+	}
+	if err = data.Save(); err != nil {
+		c.JSON(http.StatusBadRequest, &Response{
+			Success: false,
+			Msg:     err.Error(),
+		})
+		return
 	}
 	c.JSON(http.StatusOK, Response{
 		Success: true,
-		Data:    data,
+		Data: gin.H{
+			"id": data.ID,
+		},
 	})
 
 }
 
 // FileDown 下载文件
 func FileDown(c *gin.Context) {
-	var fileI models.FileInfo
-	err := c.BindQuery(&fileI)
+	id := c.Param("id")
+
+	var f models.File
+
+	err := f.Find(id)
+
 	if err != nil {
 		c.JSON(http.StatusBadRequest, &Response{
 			Success: false,
 			Msg:     err.Error(),
 		})
+		return
 	}
 
-	fullPath := filepath.Join(upload.GetFileFullPath(), fileI.Path, fileI.ID)
+	fullPath := filepath.Join(upload.GetFileFullPath(), f.Path, f.CacheID)
 
 	if file.CheckNotExist(fullPath) {
 		c.JSON(http.StatusBadRequest, &Response{
@@ -82,5 +105,20 @@ func FileDown(c *gin.Context) {
 		})
 		return
 	}
-	c.FileAttachment(fullPath, fileI.FileName)
+	c.FileAttachment(fullPath, f.Name)
+}
+
+// FileDelete 删除文件
+func FileDelete(c *gin.Context) {
+	id := c.Param("id")
+	var f models.File
+	err := f.Delete(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, &Response{
+			Success: false,
+			Msg:     "error Exis file",
+		})
+		return
+	}
+	c.Status(http.StatusNoContent)
 }

@@ -26,30 +26,14 @@ type Task struct {
 	Title                  string     //标题
 	Content                string     //内容
 	ParentID               *uint      //主任务id
-	Attach                 string     //附件
+	Attach                 []Attach   //附件
+	ParentAttach           []Attach   `gorm:"-"`
 	Type                   uint       // 任务类型 1.主任务 2.部门任务 3.人员任务
 	DesignatedPerson       string     //指定人
 	DesignatedPersonID     string     //指定人OpenId
 	DesignatedDepartment   string     //指定部门
 	DesignatedDepartmentID string     //指定部门Id
 	Children               []*Task    `gorm:"-"`
-}
-
-//Attach 附件
-type Attach struct {
-	Response FileInfo `json:"response"`
-	URL      string   `json:"url"`
-	Name     string   `json:"name"`
-	Status   string   `json:"status"`
-	UID      string   `json:"uid"`
-}
-
-// FileInfo 上传文件返回值
-type FileInfo struct {
-	ID       string `form:"id" json:"id"`
-	FileName string `form:"fileName" json:"fileName"`
-	Ext      string `form:"ext" json:"ext"`
-	Path     string `form:"path" json:"path"`
 }
 
 const (
@@ -61,10 +45,14 @@ const (
 	RoleNormal = 3
 	//TaskStatusDone 任务完成状态
 	TaskStatusDone = 2
+	// TaskStatusUndo 任务未完成
 	TaskStatusUndo = 1
-	TaskTypeMain   = 1
-	TaskTypeDept   = 2
-	TaskTypeNomal  = 3
+	// TaskTypeMain 主任务类型
+	TaskTypeMain = 1
+	// TaskTypeDept 部门类型
+	TaskTypeDept = 2
+	// TaskTypeNomal 普通类型
+	TaskTypeNomal = 3
 )
 
 //Save 保存
@@ -116,12 +104,15 @@ func (t *Task) SaveMasterAndSlave(tasks []Task) (err error) {
 
 //FindByID 根据ID获取任务信息
 func (t *Task) FindByID(id string) (err error) {
-	if err = db.Find(t, id).Error; err != nil {
+	if err = db.Where(id).Preload("Attach").First(&t).Error; err != nil {
 		return
 	}
 	if err = t.findChildren(); err != nil {
 		return
 	}
+	attach, err := t.findParentAttach()
+	t.ParentAttach = attach
+
 	return
 }
 
@@ -134,12 +125,20 @@ func (t *Task) findChildren() (err error) {
 	return nil
 }
 
+func (t *Task) findParentAttach() (attach []Attach, err error) {
+	if t.ParentID == nil {
+		return
+	}
+	db.Where("task_id = ?", t.ParentID).Find(&attach)
+	return
+}
+
 func (t *Task) findParent() (parent *Task, err error) {
 	parent = &Task{}
 	if t.ParentID == nil {
 		return
 	}
-	if err = db.Model(t).Where(*t.ParentID).First(parent).Error; err != nil {
+	if err = db.Model(t).Where(*t.ParentID).Preload("Attach").First(parent).Error; err != nil {
 		return
 	}
 	return
