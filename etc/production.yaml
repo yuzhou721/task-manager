@@ -23,4 +23,4 @@ app:
     UIURL: http://119.62.184.109:8082/task-mobile/
     SavePath: upload
     RuntimePath : ./runtime
-    corn: 0 0 9 * * ?
+    cron: 0 0 9 * * ?
