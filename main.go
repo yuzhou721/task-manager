@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"task/app/models"
 	"task/conf"
+	"task/pkg/cron"
 	"task/routers"
 	"time"
 )
@@ -37,6 +38,14 @@ func start() {
 		WriteTimeout:   conf.Config.Server.WriteTimeout,
 		MaxHeaderBytes: 1 << 20,
 	}
+
+	err := cron.C.AddFunc(conf.Config.App.Cron, func() {
+		models.Remind(time.Now())
+	})
+	if err != nil {
+		log.Fatal("add cron func fail:", err)
+	}
+	cron.C.Start()
 
 	go func() {
 		// service connections

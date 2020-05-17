@@ -409,8 +409,8 @@ func (t *Task) sendNotify(Type int) (err error) {
 	return
 }
 
-//Rimind 提醒逾期任务
-func Rimind(time time.Time) (err error) {
+//Remind 提醒逾期任务
+func Remind(time time.Time) (err error) {
 	var tasks []*Task
 	if err = db.Model(&Task{}).Where("date(due_date) = date(?)", time.Local()).Find(&tasks).Error; err != nil && err != gorm.ErrRecordNotFound {
 		return
