@@ -3,7 +3,6 @@ package test
 import (
 	"task/app/models"
 	"testing"
-	"time"
 )
 
 // func TestInitTable(t *testing.T) {
@@ -21,18 +20,18 @@ import (
 // 	}
 // }
 
-func TestUpdate(t *testing.T) {
+// func TestUpdate(t *testing.T) {
 
-	task := new(models.Task)
-	task.ID = 9
-	task2, err := task.FindOne()
-	if err != nil {
-		t.Error("query fail")
-	}
-	task2.Status = models.TaskStatusDone
-	task2.Update()
+// 	task := new(models.Task)
+// 	task.ID = 9
+// 	task2, err := task.FindOne()
+// 	if err != nil {
+// 		t.Error("query fail")
+// 	}
+// 	task2.Status = models.TaskStatusDone
+// 	task2.Update()
 
-}
+// }
 
 // func TestDelete(t *testing.T) {
 // 	task := &models.Task{
@@ -81,7 +80,7 @@ func TestGetPercent(t *testing.T) {
 }
 
 func TestRemind(t *testing.T) {
-	err := models.Remind(time.Now())
+	err := models.Remind(1)
 	if err != nil {
 		t.Errorf("error remind:%v", err)
 	}

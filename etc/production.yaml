@@ -24,3 +24,4 @@ app:
     SavePath: upload
     RuntimePath : ./runtime
     cron: 0 0 9 * * ?
+    RemindDays: 1

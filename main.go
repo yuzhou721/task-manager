@@ -40,7 +40,7 @@ func start() {
 	}
 
 	err := cron.C.AddFunc(conf.Config.App.Cron, func() {
-		models.Remind(time.Now())
+		models.Remind(conf.Config.App.RemindDays)
 	})
 	if err != nil {
 		log.Fatal("add cron func fail:", err)
