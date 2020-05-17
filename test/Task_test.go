@@ -81,7 +81,7 @@ func TestGetPercent(t *testing.T) {
 }
 
 func TestRemind(t *testing.T) {
-	err := models.Rimind(time.Now())
+	err := models.Remind(time.Now())
 	if err != nil {
 		t.Errorf("error remind:%v", err)
 	}

@@ -51,6 +51,7 @@ type App struct {
 	UIURL       string `yaml:"UIURL"`
 	SavePath    string `yaml:"SavePath"`
 	RuntimePath string `yaml:"RuntimePath"`
+	Cron        string `yaml:"cron"`
 }
 
 //Config 全局配置文件

@@ -23,5 +23,6 @@ app:
     UIURL: http://10.132.26.182:3000
     SavePath: upload
     RuntimePath : ./runtime
+    cron: 0 0 9 * * ?
     
 
