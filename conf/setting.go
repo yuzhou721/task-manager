@@ -52,6 +52,7 @@ type App struct {
 	SavePath    string `yaml:"SavePath"`
 	RuntimePath string `yaml:"RuntimePath"`
 	Cron        string `yaml:"cron"`
+	RemindDays  int    `yaml:"RemindDays"`
 }
 
 //Config 全局配置文件
