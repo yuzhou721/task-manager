@@ -238,16 +238,24 @@ func (t *Task) Delete() (err error) {
 func (t *Task) FindList(role int, openID, orgID, search string, status, page, pageSize int) (tasks []Task, count int, err error) {
 
 	// 查询条件
-	searchDb := db.Model(t)
-	if role == RoleAdmin {
-		searchDb = searchDb.Where("parent_id is null")
-	} else if role == RoleDept {
-		searchDb = searchDb.Where("(assigner_id = ? and type = '2' ) or designated_department_id = ? ", openID, orgID)
-	} else {
-		searchDb = searchDb.Where("designated_person_id = ?", openID)
-	}
+	searchDb := db.Debug().Model(t)
+
 	// 状态查询
 	searchDb = searchDb.Where("status = ?", status)
+
+	// 管理员查询到主任务
+	if role == RoleAdmin {
+		searchDb = searchDb.Where("(parent_id is null) or ((assigner_id = ? and type = '2' ) or designated_department_id = ? ) or (designated_person_id = ?) ", openID, orgID, openID)
+	} else {
+		// 普通员工也要能看到部门总任务
+		// 管理员也要查询到自己任务
+		searchDb = searchDb.Where("((assigner_id = ? and type = '2' ) or designated_department_id = ? ) or (designated_person_id = ?)", openID, orgID, openID)
+	}
+
+	// 普通员工也要能看到部门总任务
+	// searchDb = searchDb.Or("(assigner_id = ? and type = '2' ) or designated_department_id = ? ", openID, orgID)
+	// 管理员也要查询到自己任务
+	// searchDb = searchDb.Or("designated_person_id = ?", openID)
 	// 模糊查询
 	if search != "" {
 		search = "%" + search + "%"
