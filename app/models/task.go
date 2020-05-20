@@ -238,7 +238,7 @@ func (t *Task) Delete() (err error) {
 func (t *Task) FindList(role int, openID, orgID, search string, status, page, pageSize int) (tasks []Task, count int, err error) {
 
 	// 查询条件
-	searchDb := db.Debug().Model(t)
+	searchDb := db.Model(t)
 
 	// 状态查询
 	searchDb = searchDb.Where("status = ?", status)
