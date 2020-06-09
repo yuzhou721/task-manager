@@ -20,7 +20,7 @@ yzj:
     pubID: XT-ab62dab1-a6a5-4417-8a00-282fb591a6e3
     pubSecret: e260778b40a9036f8fb4fecfed8e9134
 app:
-    UIURL: http://119.62.184.109:8082/task-mobile/
+    UIURL: http://oa.smart-yulong.com:8082/task-mobile/
     SavePath: upload
     RuntimePath : ./runtime
     cron: 0 0 9 * * ?
