@@ -1,6 +1,4 @@
 FROM centos
-# 时区
-COPY /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 # 中文支持
 ENV LANG en_US.UTF-8  
 # 拷贝数据
