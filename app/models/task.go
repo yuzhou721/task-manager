@@ -77,7 +77,10 @@ func (t *Task) SaveOrUpdateList(tasks *[]Task) (err error) {
 				tx.Rollback()
 			}
 		}
-		v.sendTodo()
+		todoErr := v.sendTodo()
+		if todoErr != nil {
+			log.Printf("SendTodo Error:%v", err.Error())
+		}
 	}
 	tx.Commit()
 	return err
@@ -96,7 +99,10 @@ func (t *Task) SaveMasterAndSlave(tasks []Task) (err error) {
 		if err = tx.Create(&v).Error; err != nil {
 			tx.Rollback()
 		}
-		v.sendTodo()
+		todoErr := v.sendTodo()
+		if todoErr != nil {
+			log.Printf("SendTodo Error:%v", err.Error())
+		}
 	}
 	tx.Commit()
 	return err
@@ -160,7 +166,10 @@ func (t *Task) Update() (err error) {
 	}
 	if t.Status == TaskStatusDone {
 		t.clearTodo()
-		t.sendNotify(notifyTypeStatus)
+		nErr := t.sendNotify(notifyTypeStatus)
+		if nErr != nil {
+			log.Printf("SendNotify Error:%v", nErr.Error())
+		}
 	}
 	return
 }
@@ -394,7 +403,10 @@ func (t *Task) sendNotify(Type int) (err error) {
 			if err != nil {
 				return err
 			}
-			pt.sendNotify(notifyTypeStatus)
+			nErr := pt.sendNotify(notifyTypeStatus)
+			if nErr != nil {
+				log.Printf("SendNotify Error:%v", nErr.Error())
+			}
 		}
 		percent, err := t.CountTaskPercent(strconv.Itoa(int(t.ID)))
 		if err != nil {
@@ -427,7 +439,10 @@ func Remind(days int) (err error) {
 	}
 
 	for _, v := range tasks {
-		v.sendNotify(notifyTypeTimeout)
+		nErr := v.sendNotify(notifyTypeTimeout)
+		if nErr != nil {
+			log.Printf("SendNotify Error:%v", nErr.Error())
+		}
 	}
 	return
 }
