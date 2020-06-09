@@ -266,7 +266,7 @@ func (t *Task) FindList(role int, openID, orgID, search string, status, page, pa
 	searchDb = searchDb.Count(&count)
 	// 分页获取
 	searchDb = searchDb.Offset(utils.GetPageOffset(page, pageSize)).Limit(pageSize)
-	// TODO: 排序
+	// 排序
 	searchDb = searchDb.Order("created_at DESC")
 
 	err = searchDb.Find(&tasks).Error
