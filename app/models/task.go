@@ -60,6 +60,12 @@ func (t *Task) Save() (err error) {
 	if err = db.Create(t).Error; err != nil {
 		return err
 	}
+	log.Println("start SendTodo")
+	todoErr := t.sendTodo()
+	if todoErr != nil {
+		log.Printf("SendTodo Error:%v", err.Error())
+	}
+	log.Println("end SendTodo")
 	return
 }
 
