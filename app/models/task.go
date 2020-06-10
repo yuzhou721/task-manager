@@ -77,10 +77,12 @@ func (t *Task) SaveOrUpdateList(tasks *[]Task) (err error) {
 				tx.Rollback()
 			}
 		}
+		log.Panicln("start SendTodo")
 		todoErr := v.sendTodo()
 		if todoErr != nil {
 			log.Printf("SendTodo Error:%v", err.Error())
 		}
+		log.Panicln("end SendTodo")
 	}
 	tx.Commit()
 	return err
@@ -99,10 +101,12 @@ func (t *Task) SaveMasterAndSlave(tasks []Task) (err error) {
 		if err = tx.Create(&v).Error; err != nil {
 			tx.Rollback()
 		}
+		log.Panicln("start SendTodo")
 		todoErr := v.sendTodo()
 		if todoErr != nil {
 			log.Printf("SendTodo Error:%v", err.Error())
 		}
+		log.Panicln("end SendTodo")
 	}
 	tx.Commit()
 	return err
@@ -422,6 +426,7 @@ func (t *Task) sendNotify(Type int) (err error) {
 	}
 
 	url = fmt.Sprintf("%v/#/detail/%v/view", conf.Config.App.UIURL, t.ID)
+	log.Printf("SendNotify url:%v,content:%v", url, content)
 	err = y.GenerateNotify(content, url, []string{openID})
 	if err != nil {
 		return
