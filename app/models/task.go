@@ -352,6 +352,7 @@ func (t *Task) sendTodo() (err error) {
 	} else {
 		openIDs = append(openIDs, t.DesignatedPersonID)
 	}
+	log.Printf("openIDs:%v , title:%v , content:%v , itemTitle:%v ,url:%v", openIDs, title, content, itemTitle, url)
 	err = y.GenerateTODO(strconv.Itoa(int(t.ID)), openIDs, title, content, itemTitle, url, headImg)
 	if err != nil {
 		return
