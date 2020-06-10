@@ -77,12 +77,12 @@ func (t *Task) SaveOrUpdateList(tasks *[]Task) (err error) {
 				tx.Rollback()
 			}
 		}
-		log.Panicln("start SendTodo")
+		log.Println("start SendTodo")
 		todoErr := v.sendTodo()
 		if todoErr != nil {
 			log.Printf("SendTodo Error:%v", err.Error())
 		}
-		log.Panicln("end SendTodo")
+		log.Println("end SendTodo")
 	}
 	tx.Commit()
 	return err
@@ -101,12 +101,12 @@ func (t *Task) SaveMasterAndSlave(tasks []Task) (err error) {
 		if err = tx.Create(&v).Error; err != nil {
 			tx.Rollback()
 		}
-		log.Panicln("start SendTodo")
+		log.Println("start SendTodo")
 		todoErr := v.sendTodo()
 		if todoErr != nil {
 			log.Printf("SendTodo Error:%v", err.Error())
 		}
-		log.Panicln("end SendTodo")
+		log.Println("end SendTodo")
 	}
 	tx.Commit()
 	return err
