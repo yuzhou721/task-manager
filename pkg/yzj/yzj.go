@@ -287,6 +287,7 @@ func (y *Yzj) GenerateTODO(sourceID string, openIDs []string, title, content, it
 	j, err := json.Marshal(request)
 	if err != nil {
 		log.Printf("error :%v", err)
+		return
 	}
 	u := fmt.Sprintf("%v/gateway/newtodo/open/generatetodo.json?accessToken=%v", conf.Config.Yzj.YZJServer, y.token)
 	client := &http.Client{}
@@ -335,6 +336,7 @@ func (y *Yzj) OprateTodo(sourceID string, openIDs []string, deal int, read, dele
 	j, err := json.Marshal(request)
 	if err != nil {
 		log.Printf("error :%v", err)
+		return
 	}
 	url := fmt.Sprintf("%v/gateway/newtodo/open/action.json?accessToken=%v", conf.Config.Yzj.YZJServer, y.token)
 	client := &http.Client{}
@@ -355,7 +357,7 @@ func (y *Yzj) OprateTodo(sourceID string, openIDs []string, deal int, read, dele
 
 func marshal(res *http.Response, responseData interface{}) (err error) {
 	body, _ := ioutil.ReadAll(res.Body)
-	// log.Printf("body = %v", string(body))
+	log.Printf("body = %v", string(body))
 	if res.StatusCode != 200 {
 		return errors.New(string(body))
 	}
