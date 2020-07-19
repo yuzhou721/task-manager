@@ -533,6 +533,8 @@ type YzjContext struct {
 	NetworkID string `json:"networkid"`
 	DeviceID  string `json:"devceId"`
 	OpenID    string `json:"openid"`
+	OrgId     string `json:"orgId"`
+	Mobile    string `json:"mobile"`
 }
 
 type acquireContextResponse struct {
