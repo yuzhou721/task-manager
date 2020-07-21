@@ -7,7 +7,6 @@ import (
 	"task/pkg/yzj"
 
 	"github.com/gin-gonic/gin"
-	"github.com/wxnacy/wgo/arrays"
 )
 
 //GetPerson 通过接口获取用户信息
@@ -138,10 +137,17 @@ func IsManager(c *gin.Context) {
 		})
 		return
 	}
-	
-	index := arrays.ContainsString(arrOpenId, openId)
+
 	flag := "0"
 	msg := ""
+
+	index := -1
+	for i := 0; i < len(arrOpenId); i++ {
+		if arrOpenId[i] == openId {
+			index = i
+			break
+		}
+	}
 	if index == -1 {
 		log.Printf("用户%v不是管理员", openId)
 		msg = "该用户不是管理员"
