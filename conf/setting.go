@@ -39,12 +39,14 @@ type Setting struct {
 }
 
 type Yzj struct {
-	AppID     string `yaml:"appID"`
-	Secret    string `yaml:"secret"`
-	EID       string `yaml:"eID"`
-	YZJServer string `yaml:"yzjServer"`
-	PubID     string `yaml:"pubID"`
-	PubSecret string `yaml:"pubSecret"`
+	AppID          string `yaml:"appID"`
+	Secret         string `yaml:"secret"`
+	EID            string `yaml:"eID"`
+	YZJServer      string `yaml:"yzjServer"`
+	PubID          string `yaml:"pubID"`
+	PubSecret      string `yaml:"pubSecret"`
+	TaskRoleId     string `yaml:"taskRoleId"`
+	OnlyReadSecret string `yaml:"onlyReadSecret"`
 }
 
 type App struct {

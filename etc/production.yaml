@@ -19,6 +19,8 @@ yzj:
     yzjServer: https://oa.smart-yulong.com
     pubID: XT-ab62dab1-a6a5-4417-8a00-282fb591a6e3
     pubSecret: e260778b40a9036f8fb4fecfed8e9134
+    taskRoleId:  2d7e3698-eec8-4850-8ffa-049ebcdf3825
+    onlyReadSecret: nFZiQ9ZE7fiukVZ9AZsAHI0x3nCO0kkx
 app:
     UIURL: http://oa.smart-yulong.com:8082/task-mobile/
     SavePath: upload

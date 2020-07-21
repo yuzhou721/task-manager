@@ -1,11 +1,13 @@
 package v1
 
 import (
+	"log"
 	"net/http"
 	"task/conf"
 	"task/pkg/yzj"
 
 	"github.com/gin-gonic/gin"
+	"github.com/wxnacy/wgo/arrays"
 )
 
 //GetPerson 通过接口获取用户信息
@@ -66,6 +68,7 @@ func GetAllOrgs(c *gin.Context) {
 			Success: false,
 			Msg:     err.Error(),
 		})
+		return
 	}
 	c.JSON(http.StatusOK, &Response{
 		Success: true,
@@ -87,6 +90,7 @@ func GetOrgPersons(c *gin.Context) {
 			Success: false,
 			Msg:     err.Error(),
 		})
+		return
 	}
 	c.JSON(http.StatusOK, &Response{
 		Success: true,
@@ -108,10 +112,49 @@ func AcquireContext(c *gin.Context) {
 			Success: false,
 			Msg:     err.Error(),
 		})
+		return
 	}
 
 	c.JSON(http.StatusOK, &Response{
 		Success: true,
 		Data:    ct,
 	})
+}
+
+func IsManager(c *gin.Context) {
+	openId := c.Param("openId")
+	y := &yzj.Yzj{
+		EID:    conf.Config.Yzj.EID,
+		Secret: conf.Config.Yzj.OnlyReadSecret,
+		Scope:  yzj.YzjScopeGroup,
+	}
+
+	roleId := conf.Config.Yzj.TaskRoleId
+	arrOpenId, err := y.GetTaskManager(roleId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, &Response{
+			Success: false,
+			Msg:     err.Error(),
+		})
+		return
+	}
+	
+	index := arrays.ContainsString(arrOpenId, openId)
+	flag := "0"
+	msg := ""
+	if index == -1 {
+		log.Printf("用户%v不是管理员", openId)
+		msg = "该用户不是管理员"
+	} else {
+		log.Printf("用户%v是管理员", openId)
+		flag = "1"
+		msg = "该用户是管理员"
+	}
+	c.JSON(http.StatusOK, &Response{
+		Success: true,
+		Data:    flag,
+		Msg:     msg,
+	})
+
+	return
 }
