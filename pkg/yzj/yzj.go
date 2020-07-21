@@ -638,6 +638,12 @@ type role struct {
 	RoleId string `json:"roleId"`
 }
 
+type roleRequest struct {
+	Nonce string `json:"nonce"`
+	EId   string `json:"eid"`
+	Data  string `json:"data"`
+}
+
 type YzjRole struct {
 	OrgIds string `json:"orgIds"`
 	OpenId string `json:"openId"`
@@ -648,13 +654,13 @@ type roleResponse struct {
 	Data []YzjRole `json:"data"`
 }
 
-//根据角色Id获取人员openId列表
+//根据角色Id获取任务中心人员列表
 func (y *Yzj) GetTaskManager(roleId string) (arrOpenId []string, err error) {
-
+	log.Printf("根据openId获取任务中心管理员")
 	r := role{RoleId: roleId}
-	ro, err1 := json.Marshal(r)
+	ro, err := json.Marshal(r)
 
-	if err1 != nil {
+	if err != nil {
 		return
 	}
 
@@ -662,7 +668,6 @@ func (y *Yzj) GetTaskManager(roleId string) (arrOpenId []string, err error) {
 	if err != nil {
 		return
 	}
-	fmt.Println(ro)
 	if err != nil {
 		log.Printf("error :%v", err)
 	}
@@ -671,13 +676,14 @@ func (y *Yzj) GetTaskManager(roleId string) (arrOpenId []string, err error) {
 
 	DataUrlVal := url.Values{}
 	client := &http.Client{}
-	//随机数
+
 	DataUrlVal.Add("nonce", string(time.Now().Unix()))
 	DataUrlVal.Add("eid", y.EID)
 	DataUrlVal.Add("data", string(ro))
 
 	req, err := http.NewRequest("POST", u, strings.NewReader(DataUrlVal.Encode()))
 
+	log.Printf("请求url%v", u)
 	if err != nil {
 		return
 	}
@@ -689,9 +695,6 @@ func (y *Yzj) GetTaskManager(roleId string) (arrOpenId []string, err error) {
 	req.Header.Add("Content-Length", "25")
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Cookie", "user_trace_token=20170425200852-dfbddc2c21fd492caac33936c08aef7e; LGUID=20170425200852-f2e56fe3-29af-11e7-b359-5254005c3644; showExpriedIndex=1; showExpriedCompanyHome=1; showExpriedMyPublish=1; hasDeliver=22; index_location_city=%E5%85%A8%E5%9B%BD; JSESSIONID=CEB4F9FAD55FDA93B8B43DC64F6D3DB8; TG-TRACK-CODE=search_code; SEARCH_ID=b642e683bb424e7f8622b0c6a17ffeeb; Hm_lvt_4233e74dff0ae5bd0a3d81c6ccf756e6=1493122129,1493380366; Hm_lpvt_4233e74dff0ae5bd0a3d81c6ccf756e6=1493383810; _ga=GA1.2.1167865619.1493122129; LGSID=20170428195247-32c086bf-2c09-11e7-871f-525400f775ce; LGRID=20170428205011-376bf3ce-2c11-11e7-8724-525400f775ce; _putrc=AFBE3C2EAEBB8730")
-	req.Header.Add("Host", "www.lagou.com")
-	req.Header.Add("Origin", "https://www.lagou.com")
-	req.Header.Add("Referer", "https://www.lagou.com/jobs/list_python?labelWords=&fromSearch=true&suginput=")
 	req.Header.Add("X-Anit-Forge-Code", "0")
 	req.Header.Add("X-Anit-Forge-Token", "None")
 	req.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
@@ -704,14 +707,15 @@ func (y *Yzj) GetTaskManager(roleId string) (arrOpenId []string, err error) {
 
 	defer resp.Body.Close()
 	if err != nil {
-		log.Printf("%获取角色人员列表错误" + err.Error())
 		return
 	}
 	//读取返回值
 	response, err := ioutil.ReadAll(resp.Body)
+	log.Printf("返回结果：%v", string(response))
+
+	//角色下没有人员时，返回data为空字符串，有人员信息时，返回值为数组，没做差异化解析，可能会报错。
 	err = json.Unmarshal(response, &responseData)
 	if err != nil {
-		log.Printf(err.Error())
 		return
 	}
 
