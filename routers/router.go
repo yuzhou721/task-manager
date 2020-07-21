@@ -41,7 +41,7 @@ func InitRouter() *gin.Engine {
 		apiv1.GET("/persons/orgs/:id", v1.GetOrgPersons)
 		apiv1.GET("/orgs", v1.GetAllOrgs)
 		apiv1.GET("/context/:ticket", v1.AcquireContext)
-		apiv1.GET("/role/:phone", v1.IsAdmin)
+		apiv1.GET("/role/:openId", v1.IsManager)
 		// 文件上传下载
 		apiv1.POST("/upload", v1.FileUpload)
 		apiv1.GET("/download/:id", v1.FileDown)
