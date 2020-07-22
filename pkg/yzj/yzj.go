@@ -344,6 +344,10 @@ func (y *Yzj) GenerateTODO(sourceID string, openIDs []string, title, content, it
 	u := fmt.Sprintf("%v/gateway/newtodo/open/generatetodo.json?accessToken=%v", conf.Config.Yzj.YZJServer, y.token)
 	client := &http.Client{}
 	response, err := client.Post(u, "application/json", bytes.NewBuffer(j))
+
+	log.Printf("发送待办的url:" + u)
+	log.Printf("参数:")
+	fmt.Println(request)
 	if err != nil {
 		return err
 	}
@@ -353,6 +357,9 @@ func (y *Yzj) GenerateTODO(sourceID string, openIDs []string, title, content, it
 	if err != nil {
 		return
 	}
+
+	log.Printf("发送待办return:")
+	fmt.Println(res)
 	if res.Success == "false" {
 		return errors.New(res.Error)
 	}
@@ -486,19 +493,24 @@ func (y *Yzj) GenerateNotify(text, url string, openIDs []string) (err error) {
 	if err != nil {
 		log.Printf("error :%v", err)
 	}
-
+	log.Println("发送公众号消息")
+	log.Println("参数为:")
+	fmt.Println(request)
 	u := fmt.Sprintf("%v/pubacc/pubsend", conf.Config.Yzj.YZJServer)
+	log.Println("请求url:" + u)
 	client := &http.Client{}
 	response, err := client.Post(u, "application/json", bytes.NewBuffer(j))
+
 	if err != nil {
 		return
 	}
+	log.Println("response")
+	fmt.Println(response)
 	var res pubResponse
 	err = marshal(response, res)
 	if err != nil {
 		return
 	}
-
 	return
 }
 

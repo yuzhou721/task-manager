@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"task/app/models"
@@ -139,6 +141,10 @@ func SaveTasks(c *gin.Context) {
 			"msg": err.Error(),
 		})
 	}
+
+	fmt.Println("保存任务参数列表为:")
+	fmt.Println(tasks)
+
 	(&models.Task{}).SaveOrUpdateList(&tasks)
 	c.Status(http.StatusCreated)
 }
@@ -155,6 +161,9 @@ func SaveTaskMasterAndSlave(c *gin.Context) {
 			})
 		return
 	}
+
+	log.Printf("参数为:")
+	fmt.Println(tasks)
 	//如果值录入了主任务 就只保存一条
 	if len(tasks) == 1 {
 		tasks[0].Save()

@@ -349,6 +349,7 @@ func (t *Task) sendTodo() (err error) {
 	url = fmt.Sprintf("%v/#/detail/%v/edit", conf.Config.App.UIURL, t.ID)
 	if t.DesignatedDepartmentID != "" {
 		org, err := y.GetOrg(t.DesignatedDepartmentID)
+		log.Printf("给部门领导发送待办消息!")
 		if err != nil {
 			log.Printf("error get org:%v", err.Error())
 		}
@@ -359,7 +360,13 @@ func (t *Task) sendTodo() (err error) {
 		openIDs = append(openIDs, t.DesignatedPersonID)
 	}
 	log.Printf("openIDs:%v , title:%v , content:%v , itemTitle:%v ,url:%v", openIDs, title, content, itemTitle, url)
-	err = y.GenerateTODO(strconv.Itoa(int(t.ID)), openIDs, title, content, itemTitle, url, headImg)
+	//sourceId
+
+	si := fmt.Sprintf("%v-%v", t.CreatedAt.UnixNano(), t.ID)
+
+	fmt.Println("sourceId:" + si)
+
+	err = y.GenerateTODO(si, openIDs, title, content, itemTitle, url, headImg)
 	if err != nil {
 		return
 	}
@@ -382,7 +389,10 @@ func (t *Task) clearTodo() (err error) {
 		}
 		pt.clearTodo()
 	}
-	err = y.OprateTodo(strconv.Itoa(int(t.ID)), []string{strconv.Itoa(int(t.ID))}, 0, 0, 0)
+
+	//sourceId
+	si := fmt.Sprintf("%v-%v", t.CreatedAt.UnixNano(), t.ID)
+	err = y.OprateTodo(si, []string{strconv.Itoa(int(t.ID))}, 0, 0, 0)
 	if err != nil {
 		return
 	}
