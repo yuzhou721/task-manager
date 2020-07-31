@@ -371,6 +371,7 @@ type oprateTodoRequest struct {
 	Sourceitemid string     `json:"sourceitemid"` //	是 	即发送待办的sourceId,生成的待办所关联的第三方服务业务记录的ID，是待办的批次号
 	Openids      []string   `json:"openids"`      // 	否 	可填多人，不填则更改sourceitemid下所有人员的待办状态
 	ActionType   actionType `json:"actiontype"`
+	Sync         bool       `json:"sync"`
 }
 
 type actionType struct {
@@ -391,23 +392,30 @@ func (y *Yzj) OprateTodo(sourceID string, openIDs []string, deal int, read, dele
 		Sourcetype:   y.AppID,
 		Openids:      openIDs,
 		ActionType:   at,
+		Sync:         true,
 	}
 	j, err := json.Marshal(request)
 	if err != nil {
 		log.Printf("error :%v", err)
 		return
 	}
+
+	log.Printf("清除待办......")
+	log.Printf("参数：")
+	fmt.Println(request)
 	url := fmt.Sprintf("%v/gateway/newtodo/open/action.json?accessToken=%v", conf.Config.Yzj.YZJServer, y.token)
 	client := &http.Client{}
 	response, err := client.Post(url, "application/json", bytes.NewBuffer(j))
 	if err != nil {
 		return
 	}
+	log.Printf("url：" + url)
 	var res todoResponse
 	err = marshal(response, &res)
 	if err != nil {
 		return
 	}
+
 	if res.Success == "false" {
 		return errors.New(res.Error)
 	}
@@ -504,8 +512,6 @@ func (y *Yzj) GenerateNotify(text, url string, openIDs []string) (err error) {
 	if err != nil {
 		return
 	}
-	log.Println("response")
-	fmt.Println(response)
 	var res pubResponse
 	err = marshal(response, res)
 	if err != nil {
