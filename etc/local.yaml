@@ -22,7 +22,7 @@ yzj:
     taskRoleId:  2d7e3698-eec8-4850-8ffa-049ebcdf3825
     onlyReadSecret: nFZiQ9ZE7fiukVZ9AZsAHI0x3nCO0kkx
 app:
-    UIURL: http://10.132.25.234:3000
+    UIURL: http://10.132.25.106:3000
     SavePath: upload
     RuntimePath : ./runtime
     cron: 0 0 9 * * ?

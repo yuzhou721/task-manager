@@ -110,7 +110,7 @@ func (t *Task) SaveMasterAndSlave(tasks []Task) (err error) {
 		log.Println("start SendTodo")
 		todoErr := v.sendTodo()
 		if todoErr != nil {
-			log.Printf("SendTodo Error:%v", err.Error())
+			log.Printf("SendTodo Error:%v", todoErr.Error())
 		}
 		log.Println("end SendTodo")
 	}
@@ -170,13 +170,19 @@ func (t *Task) FindOne() (r *Task, err error) {
 }
 
 //Update 根据ID修改实体类
-func (t *Task) Update() (err error) {
-	if err = db.Model(t).Update(t).Error; err != nil && err != gorm.ErrRecordNotFound {
+func (t *Task) Update(ut *Task) (err error) {
+	ct := *t
+	log.Printf("任务已完成1!,id为:%v", ut.ID)
+	if err = db.Model(t).Update(ut).Error; err != nil && err != gorm.ErrRecordNotFound {
 		return
 	}
-	if t.Status == TaskStatusDone {
-		t.clearTodo()
-		nErr := t.sendNotify(notifyTypeStatus)
+	fmt.Println("..........")
+	if ct.Status == TaskStatusDone {
+		log.Printf("任务已完成2!,id为:%v", ct.ID)
+		log.Printf("更新任务状态参数:")
+		log.Println(ct)
+		ct.clearTodo()
+		nErr := ct.sendNotify(notifyTypeStatus)
 		if nErr != nil {
 			log.Printf("SendNotify Error:%v", nErr.Error())
 		}
@@ -186,15 +192,20 @@ func (t *Task) Update() (err error) {
 
 //AfterUpdate 钩子函数 用于更新数据状态以后 更新父类状态
 func (t *Task) AfterUpdate(tx *gorm.DB) (err error) {
+	log.Printf("任务已完成8!,id为:%v", t.ID)
 	if t.Status == TaskStatusDone {
 		if err = t.updateParentDone(tx); err != nil {
 			return
 		}
 	}
+	log.Printf("任务已完成9!,id为:%v", t.ID)
 	return
 }
 
 func (t *Task) updateParentDone(tx *gorm.DB) (err error) {
+	log.Printf("任务已完成3!,id为:%v", t.ID)
+	//更新父类的待办
+
 	if t.ParentID == nil {
 		return
 	}
@@ -203,9 +214,16 @@ func (t *Task) updateParentDone(tx *gorm.DB) (err error) {
 	if t.ParentID == nil {
 		return
 	}
-	if err = tx.Model(t).Where(*t.ParentID).First(&pt).Error; err != nil {
+	fmt.Println("ptAddress1:")
+	fmt.Println(&pt)
+	fmt.Println(t)
+	if err = tx.Where(*t.ParentID).First(&pt).Error; err != nil {
 		return
 	}
+	fmt.Println("ptAddress:")
+	fmt.Println(&pt)
+	fmt.Println(t)
+	log.Printf("任务已完成4!,id为:%v", t.ID)
 	// 如果没有父任务 跳出
 	if err != nil && err == gorm.ErrRecordNotFound {
 		return nil
@@ -220,10 +238,10 @@ func (t *Task) updateParentDone(tx *gorm.DB) (err error) {
 
 	// 查询子任务 因为在同一个事务，所以可以脏读取
 	var brother []*Task
-	if err = tx.Model(t).Where("parent_id = ?", t.ParentID).Find(&brother).Error; err != nil && err != gorm.ErrRecordNotFound {
+	if err = tx.Where("parent_id = ?", t.ParentID).Find(&brother).Error; err != nil && err != gorm.ErrRecordNotFound {
 		return
 	}
-
+	log.Printf("任务已完成5!,id为:%v", t.ID)
 	// 如果子任务查询出来完成任务数量等于子任务数量 说明全部任务已完成 修改父任态
 	cl := len(brother)
 	if cl == 0 {
@@ -241,6 +259,9 @@ func (t *Task) updateParentDone(tx *gorm.DB) (err error) {
 		if err = tx.Model(t).Update(&pt).Error; err != nil && err != gorm.ErrRecordNotFound {
 			return
 		}
+		log.Printf("任务已完成6!,id为:%v", t.ID)
+		pt.clearTodo()
+		log.Printf("任务已完成7!,id为:%v", t.ID)
 	}
 	return
 }
@@ -257,7 +278,7 @@ func (t *Task) Delete() (err error) {
 func (t *Task) FindList(role int, openID, orgID, search string, status, page, pageSize int) (tasks []Task, count int, err error) {
 
 	// 查询条件
-	searchDb := db.Model(t)
+	searchDb := db.Model(t).Debug()
 
 	// 状态查询
 	searchDb = searchDb.Where("status = ?", status)
@@ -362,7 +383,7 @@ func (t *Task) sendTodo() (err error) {
 	log.Printf("openIDs:%v , title:%v , content:%v , itemTitle:%v ,url:%v", openIDs, title, content, itemTitle, url)
 	//sourceId
 
-	si := fmt.Sprintf("%v-%v", t.CreatedAt.UnixNano(), t.ID)
+	si := fmt.Sprintf("%v-%v", t.CreatedAt.Format("20060102"), t.ID)
 
 	fmt.Println("sourceId:" + si)
 
@@ -382,17 +403,17 @@ func (t *Task) clearTodo() (err error) {
 	if t.Status != TaskStatusDone {
 		return
 	}
-	if t.ParentID != nil {
-		pt, err := t.findParent()
-		if err != nil {
-			return err
-		}
-		pt.clearTodo()
-	}
-
+	// if t.ParentID != nil {
+	// 	pt, err := t.findParent()
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	pt.clearTodo()
+	// }
+	log.Println("清除待办!")
 	//sourceId
-	si := fmt.Sprintf("%v-%v", t.CreatedAt.UnixNano(), t.ID)
-	err = y.OprateTodo(si, []string{strconv.Itoa(int(t.ID))}, 0, 0, 0)
+	si := fmt.Sprintf("%v-%v", t.CreatedAt.Format("20060102"), t.ID)
+	err = y.OprateTodo(si, []string{t.DesignatedPersonID}, 1, 0, 0)
 	if err != nil {
 		return
 	}
