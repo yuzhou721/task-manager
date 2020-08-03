@@ -285,11 +285,11 @@ func (t *Task) FindList(role int, openID, orgID, search string, status, page, pa
 
 	// 管理员查询到主任务
 	if role == RoleAdmin {
-		searchDb = searchDb.Where("(parent_id is null) or ((assigner_id = ? and type = '2' ) or designated_department_id = ? ) or (designated_person_id = ?) ", openID, orgID, openID)
-	} else {
-		// 普通员工也要能看到部门总任务
-		// 管理员也要查询到自己任务
-		searchDb = searchDb.Where("((assigner_id = ? and type = '2' ) or designated_department_id = ? ) or (designated_person_id = ?)", openID, orgID, openID)
+		searchDb = searchDb.Where("assigner_id = ? and type = '1' ", openID)
+	} else if role == RoleDept { //部门负责人查看部门任务
+		searchDb = searchDb.Where("(assigner_id = ? or designated_department_id = ?  or designated_person_id = ?) and type='2'", openID, orgID, openID)
+	} else { //个人查看个人任务
+		searchDb = searchDb.Where("type = '3' and designated_person_id = ?", openID)
 	}
 
 	// 普通员工也要能看到部门总任务
