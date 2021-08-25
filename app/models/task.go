@@ -285,7 +285,7 @@ func (t *Task) FindList(role int, openID, orgID, search string, status, page, pa
 
 	// 管理员查询到主任务
 	if role == RoleAdmin {
-		searchDb = searchDb.Where("id is not null")
+		searchDb = searchDb.Where("id is not null and type = '1' ")
 		//searchDb = searchDb.Where("assigner_id = ? and type = '1' ", openID)
 	} else if role == RoleDept { //部门负责人查看部门任务
 		searchDb = searchDb.Where("(assigner_id = ? or designated_department_id = ?  or designated_person_id = ?) and type='2'", openID, orgID, openID)
